@@ -3,6 +3,7 @@ package com.dev.auth.auth;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.ResponseEntity;
@@ -26,6 +27,10 @@ public class AuthenticationController {
     return ResponseEntity.ok(authenticationService.authenticate(request));
   }
 
-  
+  @PostMapping("/logout")
+  public ResponseEntity<String> logout(HttpServletRequest request) {
+    authenticationService.logout(request);
+    return ResponseEntity.ok("Logout successful");
+  }
 
 }

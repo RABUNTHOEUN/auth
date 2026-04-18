@@ -9,7 +9,10 @@ import com.dev.auth.User.Role;
 import com.dev.auth.User.User;
 import com.dev.auth.User.UserRepository;
 import com.dev.auth.config.JwtService;
+import com.dev.auth.token.Token;
+import com.dev.auth.token.TokenRepository;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -20,6 +23,17 @@ public class AuthenticationService {
   private final PasswordEncoder passwordEncoder;
   private final JwtService jwtService;
   private final AuthenticationManager authenticationManager;
+  private final TokenRepository tokenRepository;
+
+  private void saveUserToken(String jwtToken) {
+
+    Token token = new Token();
+    token.setToken(jwtToken);
+    token.setExpired(false);
+    token.setRevoked(false);
+
+    tokenRepository.save(token);
+  }
 
   public AuthenticationResponse register(RegisterRequest request) {
 
@@ -38,6 +52,7 @@ public class AuthenticationService {
     repository.save(user);
 
     var jwtToken = jwtService.generateToken(user);
+    saveUserToken(jwtToken);
 
     return AuthenticationResponse.builder()
         .token(jwtToken)
@@ -55,9 +70,31 @@ public class AuthenticationService {
         .orElseThrow(() -> new RuntimeException("User not found"));
 
     var jwtToken = jwtService.generateToken(user);
+    saveUserToken(jwtToken);
 
     return AuthenticationResponse.builder()
         .token(jwtToken)
         .build();
+  }
+
+  public void logout(HttpServletRequest request) {
+
+    final String authHeader = request.getHeader("Authorization");
+    final String jwt;
+
+    if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+      return;
+    }
+
+    jwt = authHeader.substring(7);
+
+    var storedToken = tokenRepository.findByToken(jwt);
+
+    if (storedToken.isPresent()) {
+      Token token = storedToken.get();
+      token.setExpired(true);
+      token.setRevoked(true);
+      tokenRepository.save(token);
+    }
   }
 }
