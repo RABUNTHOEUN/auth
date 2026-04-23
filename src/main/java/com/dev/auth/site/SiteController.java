@@ -28,4 +28,14 @@ public class SiteController {
  public Site get(@PathVariable Long id){
    return service.find(id);
  }
+
+ @PutMapping("/{id}")
+  public Site update(@PathVariable Long id, @RequestBody SiteDto dto) {
+    return service.update(id, dto.getName(), dto.getConfig());
+  }
+
+  @DeleteMapping("/{id}")
+  public void delete(@PathVariable Long id) {
+    service.delete(id);
+  }
 }
